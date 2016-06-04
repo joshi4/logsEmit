@@ -12,8 +12,13 @@ import (
 )
 
 func main() {
-	c := 0
-	tok := "default"
+	c := 49
+	tok, err := getInitialToken("test")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
 	for {
 		c++
 		msg := fmt.Sprintf("log-test:%d", c)
@@ -26,6 +31,35 @@ func main() {
 		fmt.Println(msg)
 		time.Sleep(1 * time.Second)
 	}
+}
+
+func getInitialToken(stream string) (string, error) {
+	cl := cloudwatchlogs.New(session.New(util.AwsConfigWithSharedCredentials("us-west-2")))
+	params := &cloudwatchlogs.DescribeLogStreamsInput{
+		LogGroupName:        aws.String("test"),
+		LogStreamNamePrefix: aws.String(stream),
+	}
+
+	tok := ""
+	getTokenForStream := func(p *cloudwatchlogs.DescribeLogStreamsOutput, lp bool) bool {
+		for _, ls := range p.LogStreams {
+			if aws.StringValue(ls.LogStreamName) == stream {
+				tok = ls.UploadSequenceToken
+				return false
+			}
+		}
+		if lp {
+			return false
+		}
+		return true
+	}
+
+	err := cl.DescribeLogStreamsRequest(params, getTokenForStream)
+
+	if err == nil && tok == "" {
+		err = fmt.Errorf("No token found for stream:%s", stream)
+	}
+	return tok, err
 }
 
 func sendMsg(msg, tok string) (string, error) {
