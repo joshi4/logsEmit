@@ -13,7 +13,7 @@ import (
 
 func main() {
 	c := 49
-	tok, err := getInitialToken("test")
+	tok, err := tokenForStream("test")
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -33,7 +33,7 @@ func main() {
 	}
 }
 
-func getInitialToken(stream string) (string, error) {
+func tokenForStream(stream string) (string, error) {
 	cl := cloudwatchlogs.New(session.New(util.AwsConfigWithSharedCredentials("us-west-2")))
 	params := &cloudwatchlogs.DescribeLogStreamsInput{
 		LogGroupName:        aws.String("test"),
