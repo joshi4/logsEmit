@@ -44,7 +44,7 @@ func getInitialToken(stream string) (string, error) {
 	getTokenForStream := func(p *cloudwatchlogs.DescribeLogStreamsOutput, lp bool) bool {
 		for _, ls := range p.LogStreams {
 			if aws.StringValue(ls.LogStreamName) == stream {
-				tok = ls.UploadSequenceToken
+				tok = aws.StringValue(ls.UploadSequenceToken)
 				return false
 			}
 		}
@@ -54,7 +54,7 @@ func getInitialToken(stream string) (string, error) {
 		return true
 	}
 
-	err := cl.DescribeLogStreamsRequest(params, getTokenForStream)
+	err := cl.DescribeLogStreamsPages(params, getTokenForStream)
 
 	if err == nil && tok == "" {
 		err = fmt.Errorf("No token found for stream:%s", stream)
